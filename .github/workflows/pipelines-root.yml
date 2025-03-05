@@ -154,6 +154,8 @@ jobs:
   pipelines_execute:
     env:
       JOB_NAME: ${{ contains(matrix.jobs.Action.Command, 'plan') && 'Plan' || 'Apply' }} - ${{ matrix.jobs.ChangeType }} - ${{ matrix.jobs.WorkingDirectory }}
+      KUBERGRUNT_VERSION: v0.16.0
+      KUBECTL_VERSION: v1.31.2
     name: ${{ contains(matrix.jobs.Action.Command, 'plan') && 'Plan' || 'Apply' }} - ${{ matrix.jobs.ChangeType }} - ${{ matrix.jobs.WorkingDirectory }}
     needs: [pipelines_orchestrate]
     runs-on: ${{ fromJSON(inputs.runner) }}
@@ -171,6 +173,22 @@ jobs:
           time_now=$(date -u +"%s")
           echo "PIPELINES_JOB_START_TIME=$time_now" >> $GITHUB_ENV
           echo "PIPELINES_BINARY_URL=$PIPELINES_BINARY_URL" >> $GITHUB_ENV
+
+      - name: Install kubergrunt
+        run: |
+          echo "Installing kubergrunt version ${KUBERGRUNT_VERSION}"
+          curl -LOsS https://github.com/gruntwork-io/kubergrunt/releases/download/${KUBERGRUNT_VERSION}/kubergrunt_linux_amd64
+          chmod +x kubergrunt_linux_amd64
+          sudo mv kubergrunt_linux_amd64 /usr/local/bin/kubergrunt
+          kubergrunt --version
+
+      - name: Install kubectl
+        run: |
+          echo "Installing kubectl version ${KUBECTL_VERSION}"
+          curl -LO "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/
+          kubectl version --client
 
       - name: Fetch Gruntwork Read Token
         id: pipelines-gruntwork-read-token
